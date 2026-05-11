@@ -5,26 +5,30 @@ import InputWithLabel from './InputWithLabel';
 const CustomEndpoint = ({
   endpoint,
   userProvideURL,
+  userProvideKey = true,
 }: {
   endpoint: EModelEndpoint | string;
   userProvideURL?: boolean | null;
+  userProvideKey?: boolean;
 }) => {
   const { control } = useFormContext();
   return (
     <form className="flex-wrap">
-      <Controller
-        name="apiKey"
-        control={control}
-        render={({ field }) => (
-          <InputWithLabel
-            id="apiKey"
-            {...field}
-            label={`${endpoint} API Key`}
-            labelClassName="mb-1"
-            inputClassName="mb-2"
-          />
-        )}
-      />
+      {userProvideKey && (
+        <Controller
+          name="apiKey"
+          control={control}
+          render={({ field }) => (
+            <InputWithLabel
+              id="apiKey"
+              {...field}
+              label={`${endpoint} API Key`}
+              labelClassName="mb-1"
+              inputClassName="mb-2"
+            />
+          )}
+        />
+      )}
       {userProvideURL && (
         <Controller
           name="baseURL"

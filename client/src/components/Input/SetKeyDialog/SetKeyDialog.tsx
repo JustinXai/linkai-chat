@@ -40,7 +40,6 @@ const endpointComponents = {
 
 const formSet: Set<string> = new Set([
   EModelEndpoint.openAI,
-  EModelEndpoint.custom,
   EModelEndpoint.azureOpenAI,
   EModelEndpoint.assistants,
   EModelEndpoint.azureAssistants,
@@ -305,6 +304,7 @@ const SetKeyDialog = ({
               endpoint={endpoint}
               setUserKey={setUserKey}
               userProvideURL={userProvideURL}
+              userProvideKey={false}
             />
           </FormProvider>
           <HelpText endpoint={endpoint} />
