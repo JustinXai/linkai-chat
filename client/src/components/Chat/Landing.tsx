@@ -5,11 +5,44 @@ import { BirthdayIcon, TooltipAnchor, SplitText } from '@librechat/client';
 import { useChatContext, useAgentsMapContext, useAssistantsMapContext } from '~/Providers';
 import { useGetEndpointsQuery, useGetStartupConfig } from '~/data-provider';
 import ConvoIcon from '~/components/Endpoints/ConvoIcon';
-import { useLocalize, useAuthContext } from '~/hooks';
+import { useLocalize, useSubmitMessage } from '~/hooks';
 import { getIconEndpoint, getEntity } from '~/utils';
 
 const containerClassName =
   'shadow-stroke relative flex h-full items-center justify-center rounded-full bg-white dark:bg-presentation dark:text-white text-black dark:after:shadow-none ';
+
+/** Link-AI Chat 快捷提示词 */
+const QUICK_PROMPTS = [
+  '帮我写一篇关于 AI 的文章',
+  '解释量子计算的基本原理',
+  '推荐几本值得读的好书',
+  '帮我分析这段代码',
+];
+
+/** 快捷提示词组件 */
+const QuickPrompts = () => {
+  const { submitMessage } = useSubmitMessage();
+  const sendPrompt = useCallback(
+    (text: string) => submitMessage({ text }),
+    [submitMessage],
+  );
+
+  return (
+    <div className="mt-8 flex flex-wrap justify-center gap-3 px-4">
+      {QUICK_PROMPTS.map((text, index) => (
+        <button
+          key={index}
+          onClick={() => sendPrompt(text)}
+          className="relative flex w-48 cursor-pointer flex-col gap-2 rounded-2xl border border-border-medium px-3 pb-4 pt-3 text-start align-top text-[15px] shadow-[0_0_2px_0_rgba(0,0,0,0.05),0_4px_6px_0_rgba(0,0,0,0.02)] transition-colors duration-300 ease-in-out fade-in hover:bg-surface-tertiary"
+        >
+          <p className="break-word line-clamp-3 overflow-hidden text-balance break-all text-text-secondary">
+            {text}
+          </p>
+        </button>
+      ))}
+    </div>
+  );
+};
 
 function getTextSizeClass(text: string | undefined | null) {
   if (!text) {
@@ -33,7 +66,6 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
   const assistantMap = useAssistantsMapContext();
   const { data: startupConfig } = useGetStartupConfig();
   const { data: endpointsConfig } = useGetEndpointsQuery();
-  const { user } = useAuthContext();
   const localize = useLocalize();
 
   const [textHasMultipleLines, setTextHasMultipleLines] = useState(false);
@@ -63,43 +95,6 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
 
   const name = entity?.name ?? '';
   const description = (entity?.description || conversation?.greeting) ?? '';
-
-  const getGreeting = useCallback(() => {
-    if (typeof startupConfig?.interface?.customWelcome === 'string') {
-      const customWelcome = startupConfig.interface.customWelcome;
-      // Replace {{user.name}} with actual user name if available
-      if (user?.name && customWelcome.includes('{{user.name}}')) {
-        return customWelcome.replace(/{{user.name}}/g, user.name);
-      }
-      return customWelcome;
-    }
-
-    const now = new Date();
-    const hours = now.getHours();
-
-    const dayOfWeek = now.getDay();
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-
-    // Early morning (midnight to 4:59 AM)
-    if (hours >= 0 && hours < 5) {
-      return localize('com_ui_late_night');
-    }
-    // Morning (6 AM to 11:59 AM)
-    else if (hours < 12) {
-      if (isWeekend) {
-        return localize('com_ui_weekend_morning');
-      }
-      return localize('com_ui_good_morning');
-    }
-    // Afternoon (12 PM to 4:59 PM)
-    else if (hours < 17) {
-      return localize('com_ui_good_afternoon');
-    }
-    // Evening (5 PM to 8:59 PM)
-    else {
-      return localize('com_ui_good_evening');
-    }
-  }, [localize, startupConfig?.interface?.customWelcome, user?.name]);
 
   const handleLineCountChange = useCallback((count: number) => {
     setTextHasMultipleLines(count > 1);
@@ -132,10 +127,8 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
     return margin;
   }, [lineCount, description, textHasMultipleLines, contentHeight]);
 
-  const greetingText =
-    typeof startupConfig?.interface?.customWelcome === 'string'
-      ? getGreeting()
-      : getGreeting() + (user?.name ? ', ' + user.name : '');
+  // Link-AI Chat: 固定欢迎语
+  const greetingText = '今天想做什么？';
 
   return (
     <div
@@ -184,7 +177,7 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
             </div>
           ) : (
             <SplitText
-              key={`split-text-${greetingText}${user?.name ? '-user' : ''}`}
+              key={`split-text-${greetingText}`}
               text={greetingText}
               className={`${getTextSizeClass(greetingText)} font-medium text-text-primary`}
               delay={50}
@@ -204,6 +197,8 @@ export default function Landing({ centerFormOnLanding }: { centerFormOnLanding: 
           </div>
         )}
       </div>
+      {/* Link-AI Chat 快捷提示词 */}
+      <QuickPrompts />
     </div>
   );
 }

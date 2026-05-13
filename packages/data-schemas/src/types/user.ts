@@ -61,6 +61,8 @@ export interface IUser extends Document {
   tenantId?: string;
   federatedTokens?: OIDCTokens;
   openidTokens?: OIDCTokens;
+  /** Link-AI Chat credits and subscription information */
+  linkai?: ILinkAI;
 }
 
 export interface OIDCTokens {
@@ -129,4 +131,33 @@ export interface UserFilterOptions extends CursorPaginationParams {
 export interface UserQueryOptions {
   fieldsToSelect?: string | string[] | null;
   lean?: boolean;
+}
+
+/** Link-AI Chat types */
+export interface ILinkAIDailyUsage {
+  autoSearchCount: number;
+  deepSearchCount: number;
+  lastResetDate: string | null;
+}
+
+export interface ILinkAITotalUsage {
+  chatCount: number;
+  searchCount: number;
+  deepSearchCount: number;
+}
+
+export interface ILinkAIPlanConfig {
+  dailyAutoSearchLimit: number;
+  dailyDeepSearchLimit: number;
+  deepSearchEnabled: boolean;
+}
+
+export interface ILinkAI {
+  plan: 'free' | 'weekly' | 'monthly' | 'pro';
+  credits: number;
+  creditsTotal: number;
+  expiresAt: Date | null;
+  dailyUsage: ILinkAIDailyUsage;
+  totalUsage: ILinkAITotalUsage;
+  planConfig: Record<string, ILinkAIPlanConfig>;
 }

@@ -7,6 +7,7 @@ const adminGrants = require('./admin/grants');
 const adminGroups = require('./admin/groups');
 const adminRoles = require('./admin/roles');
 const adminUsers = require('./admin/users');
+const linkaiAdmin = require('./admin');
 const endpoints = require('./endpoints');
 const staticRoute = require('./static');
 const messages = require('./messages');
@@ -19,6 +20,7 @@ const actions = require('./actions');
 const apiKeys = require('./apiKeys');
 const banner = require('./banner');
 const search = require('./search');
+const credits = require('./credits');
 const models = require('./models');
 const convos = require('./convos');
 const config = require('./config');
@@ -42,6 +44,7 @@ module.exports = {
   adminGroups,
   adminRoles,
   adminUsers,
+  linkaiAdmin,
   keys,
   apiKeys,
   user,
@@ -54,6 +57,7 @@ module.exports = {
   agents,
   convos,
   search,
+  credits,
   config,
   models,
   prompts,

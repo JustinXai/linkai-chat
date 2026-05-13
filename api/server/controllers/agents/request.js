@@ -14,6 +14,89 @@ const { handleAbortError } = require('~/server/middleware');
 const { logViolation } = require('~/cache');
 const { saveMessage, getConvo } = require('~/models');
 
+/**
+ * 记录请求成本日志
+ * @param {Object} params
+ */
+async function logRequestCost(params) {
+  const {
+    req,
+    userId,
+    conversationId,
+    messageId,
+    model,
+    endpoint,
+    searchMode,
+    estimatedCredits,
+    deductedCredits,
+    success,
+    error,
+    errorCode,
+    searchPerformed,
+    searchResultCount,
+    responseTimeMs,
+  } = params;
+
+  try {
+    const RequestLog = require('~/models').RequestLog;
+    const User = require('~/models').User;
+
+    // 获取用户信息
+    const user = await User.findById(userId).select('email linkai').lean();
+    const userEmail = user?.email || '';
+    const userPlan = user?.linkai?.plan || 'free';
+    const userCreditsBefore = user?.linkai?.credits || 0;
+
+    await RequestLog.create({
+      userId,
+      userEmail,
+      conversationId: conversationId || '',
+      messageId: messageId || '',
+      model: model || '',
+      endpoint: endpoint || '',
+      searchMode: searchMode || 'off',
+      estimatedCredits: estimatedCredits || 0,
+      deductedCredits: deductedCredits || 0,
+      success: success !== false,
+      error: error || null,
+      errorCode: errorCode || null,
+      searchPerformed: searchPerformed || false,
+      searchResultCount: searchResultCount || 0,
+      userPlan,
+      userCreditsBefore,
+      userCreditsAfter: userCreditsBefore - (deductedCredits || 0),
+      ip: req?.ip || '',
+      userAgent: req?.get('user-agent') || '',
+      responseTimeMs: responseTimeMs || null,
+    });
+  } catch (err) {
+    logger.error('[AgentController] Failed to log request cost:', err);
+  }
+}
+
+/**
+ * Emit search status event to SSE stream
+ * @param {string} streamId
+ * @param {Object} searchMetadata - Search metadata from the client
+ */
+function emitSearchStatus(streamId, searchMetadata) {
+  if (!searchMetadata || !streamId) {
+    return;
+  }
+
+  const searchStatusEvent = {
+    type: 'search_status',
+    searchMode: searchMetadata.mode,
+    performed: searchMetadata.performed,
+    success: searchMetadata.success,
+    resultCount: searchMetadata.resultCount || 0,
+    error: searchMetadata.error || null,
+  };
+
+  GenerationJobManager.emitChunk(streamId, searchStatusEvent);
+  logger.debug(`[AgentController] Emitted search status: mode=${searchMetadata.mode}, performed=${searchMetadata.performed}`);
+}
+
 function createCloseHandler(abortController) {
   return function (manual) {
     if (!manual) {
@@ -247,6 +330,11 @@ const ResumableAgentController = async (req, res, next, initializeClient, addTit
         const onStart = (userMsg, respMsgId, _isNewConvo) => {
           userMessage = userMsg;
 
+          // Emit search status if search was performed
+          if (client?.searchMetadata) {
+            emitSearchStatus(streamId, client.searchMetadata);
+          }
+
           // Store userMessage and responseMessageId upfront for resume capability
           GenerationJobManager.updateMetadata(streamId, {
             responseMessageId: respMsgId,
@@ -422,6 +510,12 @@ const ResumableAgentController = async (req, res, next, initializeClient, addTit
           }
         }
       } catch (error) {
+        // Rollback credits on error
+        if (req.creditsDeducted) {
+          const { rollbackCredits } = require('~/server/middleware/creditsCheck');
+          await rollbackCredits(req, error.message || 'generation_error');
+        }
+
         // Check if this was an abort (not a real error)
         const wasAborted = job.abortController.signal.aborted || error.message?.includes('abort');
 
@@ -533,6 +627,32 @@ const _LegacyAgentController = async (req, res, next, initializeClient, addTitle
   // Create a function to handle final cleanup
   const performCleanup = async () => {
     logger.debug('[AgentController] Performing cleanup');
+
+    // 记录请求成本日志
+    const startTime = req._requestStartTime || Date.now();
+    const responseTimeMs = Date.now() - startTime;
+
+    const creditsDeducted = req.creditsDeducted || {};
+    const searchMetadata = client?.searchMetadata || {};
+
+    await logRequestCost({
+      req,
+      userId,
+      conversationId: conversation?.conversationId || req.body?.conversationId,
+      messageId: response?.messageId || '',
+      model: req.body?.model || '',
+      endpoint: req.body?.endpoint || '',
+      searchMode: req.body?.searchMode || 'off',
+      estimatedCredits: creditsDeducted.credits || 0,
+      deductedCredits: creditsDeducted.credits || 0,
+      success: !response?.error && !response?.unfinished,
+      error: response?.error?.message || null,
+      errorCode: response?.error?.code || null,
+      searchPerformed: searchMetadata.performed || false,
+      searchResultCount: searchMetadata.resultCount || 0,
+      responseTimeMs,
+    });
+
     if (Array.isArray(cleanupHandlers)) {
       for (const handler of cleanupHandlers) {
         try {
@@ -605,6 +725,9 @@ const _LegacyAgentController = async (req, res, next, initializeClient, addTitle
     if (clientRegistry) {
       clientRegistry.register(client, { userId }, client);
     }
+
+    // 记录请求开始时间
+    req._requestStartTime = Date.now();
 
     // Store request data in WeakMap keyed by req object
     requestDataMap.set(req, { client });

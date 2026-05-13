@@ -4,6 +4,7 @@ import type { TStartupConfig } from 'librechat-data-provider';
 import { TranslationKeys, useLocalize } from '~/hooks';
 import { useGetStartupConfig } from '~/data-provider';
 import AuthLayout from '~/components/Auth/AuthLayout';
+import LandingPage from '~/components/Landing/LandingPage';
 import { REDIRECT_PARAM, SESSION_KEY } from '~/utils';
 
 const headerMap: Record<string, TranslationKeys> = {
@@ -29,6 +30,9 @@ export default function StartupLayout({ isAuthenticated }: { isAuthenticated?: b
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Check if current path is the landing page route
+  const isLandingPage = location.pathname === '/' && !location.pathname.includes('login') && !location.pathname.includes('register') && !location.pathname.includes('forgot-password') && !location.pathname.includes('reset-password');
+
   useEffect(() => {
     if (isAuthenticated) {
       const hasPendingRedirect =
@@ -44,7 +48,7 @@ export default function StartupLayout({ isAuthenticated }: { isAuthenticated?: b
   }, [isAuthenticated, navigate, data]);
 
   useEffect(() => {
-    document.title = startupConfig?.appTitle || 'LibreChat';
+    document.title = startupConfig?.appTitle || 'Link-AI';
   }, [startupConfig?.appTitle]);
 
   useEffect(() => {
@@ -63,15 +67,21 @@ export default function StartupLayout({ isAuthenticated }: { isAuthenticated?: b
   };
 
   return (
-    <AuthLayout
-      header={headerText ? localize(headerText) : localize(headerMap[location.pathname])}
-      isFetching={isFetching}
-      startupConfig={startupConfig}
-      startupConfigError={startupConfigError}
-      pathname={location.pathname}
-      error={error}
-    >
-      <Outlet context={contextValue} />
-    </AuthLayout>
+    <>
+      {isLandingPage ? (
+        <LandingPage />
+      ) : (
+        <AuthLayout
+          header={headerText ? localize(headerText) : localize(headerMap[location.pathname])}
+          isFetching={isFetching}
+          startupConfig={startupConfig}
+          startupConfigError={startupConfigError}
+          pathname={location.pathname}
+          error={error}
+        >
+          <Outlet context={contextValue} />
+        </AuthLayout>
+      )}
+    </>
   );
 }

@@ -10,6 +10,7 @@ import { useActivePanel, resolveActivePanel, DEFAULT_PANEL } from '~/Providers';
 import { useLocalize, useNewConvo } from '~/hooks';
 import { clearMessagesCache, cn } from '~/utils';
 import store from '~/store';
+import ModelModeSelector from './ModelModeSelector';
 
 const AccountSettings = lazy(() => import('~/components/Nav/AccountSettings'));
 
@@ -157,6 +158,8 @@ function ExpandedPanel({
         }
       />
       <NewChatButton setActive={setActive} />
+      <div className="mx-2 border-b border-border-light" />
+      <ModelModeSelector />
       <div className="mx-2 border-b border-border-light" />
       <div className="flex flex-col gap-1 overflow-y-auto">
         {links.map((link) => (

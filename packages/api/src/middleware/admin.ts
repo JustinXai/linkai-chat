@@ -26,3 +26,27 @@ export const requireAdmin = (req: ServerRequest, res: Response, next: NextFuncti
 
   next();
 };
+
+/**
+ * Middleware to check if user is banned.
+ * Should be used AFTER authentication middleware.
+ */
+export const requireNotBanned = (req: ServerRequest, res: Response, next: NextFunction) => {
+  if (!req.user) {
+    return res.status(401).json({
+      error: 'Authentication required',
+      error_code: 'AUTHENTICATION_REQUIRED',
+    });
+  }
+
+  // @ts-ignore - status field may not be in type definition yet
+  if (req.user.status === 'banned') {
+    logger.debug(`[requireNotBanned] Banned user attempted access: ${req.user.email}`);
+    return res.status(403).json({
+      error: 'Your account has been suspended. Please contact support.',
+      error_code: 'USER_BANNED',
+    });
+  }
+
+  next();
+};

@@ -6,12 +6,14 @@ import text from './text';
 import toast from './toast';
 import submission from './submission';
 import search from './search';
+import searchStatus from './searchStatus';
 import preset from './preset';
 import prompts from './prompts';
 import lang from './language';
 import settings from './settings';
 import misc from './misc';
 import isTemporary from './temporary';
+import modelMode from './modelMode';
 export * from './agents';
 export * from './mcp';
 export * from './favorites';
@@ -26,10 +28,12 @@ export default {
   ...toast,
   ...submission,
   ...search,
+  ...searchStatus,
   ...prompts,
   ...preset,
   ...lang,
   ...settings,
   ...misc,
   ...isTemporary,
+  ...modelMode,
 };

@@ -7,6 +7,7 @@ import { useFavorites, useLocalize, useIsActiveItem } from '~/hooks';
 import { useModelSelectorContext } from '../ModelSelectorContext';
 import { CustomMenuItem as MenuItem } from '../CustomMenu';
 import { cn } from '~/utils';
+import { getFriendlyName } from '~/config/modelMapping';
 
 interface EndpointModelItemProps {
   modelId: string | null;
@@ -45,6 +46,18 @@ export function EndpointModelItem({ modelId, endpoint }: EndpointModelItemProps)
     endpoint.assistantNames?.[modelId]
   ) {
     modelName = endpoint.assistantNames[modelId];
+  }
+
+  // Apply friendly name mapping for standard models (not agents/assistants)
+  if (
+    modelId &&
+    !isAgentsEndpoint(endpoint.value) &&
+    !isAssistantsEndpoint(endpoint.value)
+  ) {
+    const friendlyName = getFriendlyName(modelId);
+    if (friendlyName !== modelId) {
+      modelName = friendlyName;
+    }
   }
 
   const isAgent = isAgentsEndpoint(endpoint.value);

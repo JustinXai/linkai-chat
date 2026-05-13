@@ -20,6 +20,7 @@ const { loginController } = require('~/server/controllers/auth/LoginController')
 const { findBalanceByUser, upsertBalanceFields } = require('~/models');
 const { getAppConfig } = require('~/server/services/Config');
 const middleware = require('~/server/middleware');
+const { ipRegisterLimiter, emailLoginFailureLimiter, clearLoginFailure } = require('~/server/middleware/rateLimitMiddleware');
 
 const setBalanceConfig = createSetBalanceConfig({
   getAppConfig,
@@ -36,6 +37,7 @@ router.post(
   '/login',
   middleware.logHeaders,
   middleware.loginLimiter,
+  emailLoginFailureLimiter,
   middleware.checkBan,
   ldapAuth ? middleware.requireLdapAuth : middleware.requireLocalAuth,
   setBalanceConfig,
@@ -44,6 +46,7 @@ router.post(
 router.post('/refresh', refreshController);
 router.post(
   '/register',
+  ipRegisterLimiter,
   middleware.registerLimiter,
   middleware.checkBan,
   middleware.checkInviteUser,

@@ -68,5 +68,112 @@ export function createModels(mongoose: typeof import('mongoose')) {
     SystemGrant: createSystemGrantModel(mongoose),
     Group: createGroupModel(mongoose),
     Config: createConfigModel(mongoose),
+    AdminLog: createAdminLogModel(mongoose),
+    RequestLog: createRequestLogModel(mongoose),
   };
+}
+
+/**
+ * AdminLog Model Factory
+ */
+function createAdminLogModel(mongoose: typeof import('mongoose')) {
+  const adminLogSchema = new mongoose.Schema(
+    {
+      adminUserId: { type: String, required: true, index: true },
+      adminEmail: { type: String, required: true },
+      targetUserId: { type: String, required: true, index: true },
+      targetEmail: { type: String, required: true },
+      action: {
+        type: String,
+        required: true,
+        enum: [
+          'add_credits',
+          'deduct_credits',
+          'set_plan',
+          'set_expires_at',
+          'reset_search_usage',
+          'ban_user',
+          'unban_user',
+          'update_role',
+        ],
+      },
+      before: { type: mongoose.Schema.Types.Mixed, default: null },
+      after: { type: mongoose.Schema.Types.Mixed, default: null },
+      reason: { type: String, default: '' },
+      ip: { type: String, default: '' },
+      userAgent: { type: String, default: '' },
+    },
+    {
+      timestamps: true,
+      collection: 'admin_logs',
+    },
+  );
+
+  adminLogSchema.index({ createdAt: -1 });
+  adminLogSchema.index({ adminUserId: 1, createdAt: -1 });
+  adminLogSchema.index({ targetUserId: 1, createdAt: -1 });
+  adminLogSchema.index({ action: 1, createdAt: -1 });
+  // TTL index: auto-delete logs older than 90 days
+  adminLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
+
+  return mongoose.models.AdminLog || mongoose.model('AdminLog', adminLogSchema);
+}
+
+/**
+ * RequestLog Model Factory
+ * 记录每次 API 请求的成本统计
+ */
+function createRequestLogModel(mongoose: typeof import('mongoose')) {
+  const requestLogSchema = new mongoose.Schema(
+    {
+      userId: { type: String, required: true, index: true },
+      userEmail: { type: String, default: '' },
+      conversationId: { type: String, default: '' },
+      messageId: { type: String, default: '' },
+      model: { type: String, required: true },
+      endpoint: { type: String, default: '' },
+      searchMode: {
+        type: String,
+        enum: ['off', 'auto', 'deep'],
+        default: 'off',
+      },
+      // 预估扣点
+      estimatedCredits: { type: Number, default: 0 },
+      // 实际扣点
+      deductedCredits: { type: Number, default: 0 },
+      // 成功/失败
+      success: { type: Boolean, default: true },
+      // 错误信息
+      error: { type: String, default: null },
+      errorCode: { type: String, default: null },
+      // 搜索相关
+      searchPerformed: { type: Boolean, default: false },
+      searchResultCount: { type: Number, default: 0 },
+      // 成本统计（预留）
+      providerCost: { type: Number, default: null },
+      providerTokenCount: { type: Number, default: null },
+      // 用户信息快照
+      userPlan: { type: String, default: 'free' },
+      userCreditsBefore: { type: Number, default: 0 },
+      userCreditsAfter: { type: Number, default: 0 },
+      // 请求元数据
+      ip: { type: String, default: '' },
+      userAgent: { type: String, default: '' },
+      responseTimeMs: { type: Number, default: null },
+    },
+    {
+      timestamps: true,
+      collection: 'request_logs',
+    },
+  );
+
+  // 索引
+  requestLogSchema.index({ createdAt: -1 });
+  requestLogSchema.index({ userId: 1, createdAt: -1 });
+  requestLogSchema.index({ model: 1, createdAt: -1 });
+  requestLogSchema.index({ success: 1, createdAt: -1 });
+  // TTL index: auto-delete logs older than 90 days
+  requestLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
+
+  return mongoose.models.RequestLog || mongoose.model('RequestLog', requestLogSchema);
 }

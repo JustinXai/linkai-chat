@@ -10,6 +10,7 @@ import { useGetStartupConfig, useGetUserBalance } from '~/data-provider';
 import { useAuthContext } from '~/hooks/AuthContext';
 import useEventHandlers from './useEventHandlers';
 import { clearAllDrafts } from '~/utils';
+import { searchStatusState } from '~/store/searchStatus';
 import store from '~/store';
 
 type ChatHelpers = Pick<
@@ -34,6 +35,7 @@ export default function useSSE(
   const [completed, setCompleted] = useState(new Set());
   const setAbortScroll = useSetRecoilState(store.abortScrollFamily(runIndex));
   const setShowStopButton = useSetRecoilState(store.showStopButtonByIndex(runIndex));
+  const setSearchStatus = useSetRecoilState(searchStatusState);
 
   const {
     setMessages,
@@ -103,6 +105,38 @@ export default function useSSE(
     sse.addEventListener('message', (e: MessageEvent) => {
       const data = JSON.parse(e.data);
 
+      // Handle search status events
+      if (data.type === 'search_status') {
+        const { searchMode = 'auto', performed = false, success = false, resultCount = 0, error = null } = data;
+        let status;
+        let message = '';
+
+        if (!performed) {
+          status = 'idle';
+          message = '';
+        } else if (!success) {
+          status = 'error';
+          message = error || '搜索服务暂时不可用';
+        } else if (resultCount === 0) {
+          status = 'no_results';
+          message = '没有检索到足够可靠的实时资料，将基于已有知识回答';
+        } else {
+          status = 'completed';
+          message = `已参考 ${resultCount} 条来源`;
+        }
+
+        setSearchStatus({
+          status,
+          searchMode,
+          performed,
+          success,
+          resultCount,
+          error,
+          message,
+        });
+        return;
+      }
+
       if (data.final != null) {
         clearAllDrafts(submission.conversation?.conversationId);
         try {
@@ -114,6 +148,16 @@ export default function useSSE(
         }
         (startupConfig?.balance?.enabled ?? false) && balanceQuery.refetch();
         console.log('final', data);
+        // Reset search status after completion
+        setSearchStatus({
+          status: 'idle',
+          searchMode: 'off',
+          performed: false,
+          success: false,
+          resultCount: 0,
+          error: null,
+          message: '',
+        });
         return;
       } else if (data.created != null) {
         const runId = v4();
@@ -226,6 +270,16 @@ export default function useSSE(
       }
 
       errorHandler({ data, submission: { ...submission, userMessage } as EventSubmission });
+      // Reset search status on error
+      setSearchStatus({
+        status: 'idle',
+        searchMode: 'off',
+        performed: false,
+        success: false,
+        resultCount: 0,
+        error: null,
+        message: '',
+      });
     });
 
     setIsSubmitting(true);

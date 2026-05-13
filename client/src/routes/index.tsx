@@ -15,11 +15,14 @@ import { AuthContextProvider } from '~/hooks/AuthContext';
 import RouteErrorBoundary from './RouteErrorBoundary';
 import StartupLayout from './Layouts/Startup';
 import LoginLayout from './Layouts/Login';
+import LandingPage from '~/components/Landing/LandingPage';
 import dashboardRoutes from './Dashboard';
 import ShareRoute from './ShareRoute';
 import ChatRoute from './ChatRoute';
 import Search from './Search';
 import Root from './Root';
+import AdminPage from './AdminPage';
+import LegalPage from './LegalPage';
 
 const AuthLayout = () => (
   <AuthContextProvider>
@@ -118,6 +121,10 @@ export const router = createBrowserRouter(
               element: <ChatRoute />,
             },
             {
+              path: 'admin',
+              element: <AdminPage />,
+            },
+            {
               path: 'search',
               element: <Search />,
             },
@@ -160,6 +167,22 @@ export const router = createBrowserRouter(
                   <AgentMarketplace />
                 </MarketplaceProvider>
               ),
+            },
+            {
+              path: 'terms',
+              element: <LegalPage />,
+            },
+            {
+              path: 'privacy',
+              element: <LegalPage />,
+            },
+            {
+              path: 'content-policy',
+              element: <LegalPage />,
+            },
+            {
+              path: 'contact',
+              element: <LegalPage />,
             },
           ],
         },

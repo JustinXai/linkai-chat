@@ -1,0 +1,187 @@
+# SearXNG Settings
+# Link-AI Chat 专用配置
+# 文档: https://docs.searxng.org/admin/settings/settings.html
+
+use_default_settings: true
+
+general:
+  # 实例名称
+  instance_name: "Link-AI Search"
+  # 隐私设置
+  privacypolicy_url: false
+  # 关于页面
+  about_url: false
+  # 联系方式
+  contact_url: false
+  # 捐赠链接
+  donate_url: false
+  # 官方链接
+  official_images: false
+  # 调试模式
+  debug: false
+  # 敛尸模式
+  mourn_dead_instances: false
+  # 在线实例列表
+  online_instance_list: false
+  # 结果服务器
+  result_server: false
+  # 暗色主题可用
+  enable_static_theme: true
+  # 默认主题
+  default_theme: simple
+
+search:
+  # 搜索格式 - 必须包含 json，否则 API 调用返回 403
+  formats:
+    - html
+    - json
+  # 默认语言偏向中文
+  default_lang: zh-CN
+  # 默认搜索语言
+  default_locale: zh-CN
+  # 安全搜索级别 0=关闭, 1=中等, 2=严格
+  safe_search: 1
+  # 每页结果数
+  default_page_size: 10
+  # 最大结果数
+  max_page_size: 50
+  # 自动检测语言
+  auto_detect_language: true
+  # 搜索超时
+  search_timeout: 10.0
+
+server:
+  # 监听地址 - 只绑定容器内部
+  bind_address: "0.0.0.0"
+  # 端口
+  port: 8080
+  # 密钥 - 生产环境请修改
+  secret_key: "change-this-to-a-random-string-in-production"
+  # 上传限制 (10MB)
+  max_content_size: 10485760
+  # 图片代理
+  image_proxy: true
+  # HTTP 安全头
+  http_security: true
+  # 启用 CORS
+  enable_cors: false
+  # 实际监听地址 (配合 docker-compose 的端口映射)
+  public_instance: false
+
+ui:
+  # 默认搜索框内容
+  default_search: ""
+  # 搜索建议
+  search_suggestion: true
+  # 悬浮卡片
+  floating_overlay: true
+  # 主页
+  homepage: "instant"
+  # 结果布局
+  results_on_new_tab: false
+  # 无限滚动
+  infinite_scroll: true
+
+outgoing:
+  # 请求超时
+  request_timeout: 10.0
+  # 用户代理
+  useragent_suffix: ""
+  # 禁用 DNS 缓存
+  disable_dns_cache: false
+  # 最大连接数
+  max_connections: 200
+  # 禁用代理
+  enable_http2: true
+
+# 搜索引擎配置
+engines:
+  # 全局禁用所有引擎，再按需启用
+  - name: disabled engines
+    engine: disable_generic
+
+  # ========== 启用的搜索引擎 ==========
+
+  # 通用搜索引擎
+  - name: google
+    engine: google
+    shortcut: g
+    language: zh-CN
+
+  - name: bing
+    engine: bing
+    shortcut: b
+    language: zh-CN
+
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: ddg
+    language: zh-CN
+
+  - name: brave
+    engine: brave
+    shortcut: br
+    language: zh-CN
+
+  # 中文搜索引擎
+  - name: baidu
+    engine: baidu
+    shortcut: bd
+    language: zh-CN
+
+  - name: sogou
+    engine: sogou
+    shortcut: sg
+    language: zh-CN
+
+  - name: 360search
+    engine: 360search
+    shortcut: 360
+    language: zh-CN
+
+  # ========== 禁用的搜索引擎 ==========
+
+  - name: google images
+    engine: google_images
+    shortcut: gi
+    disabled: true
+
+  - name: google news
+    engine: google_news
+    shortcut: gn
+    disabled: true
+
+  - name: bing images
+    engine: bing_images
+    shortcut: bi
+    disabled: true
+
+  - name: bing news
+    engine: bing_news
+    shortcut: bn
+    disabled: true
+
+  - name: youtube
+    engine: youtube
+    shortcut: yt
+    disabled: true
+
+  - name: github
+    engine: github
+    shortcut: gh
+    disabled: true
+
+  - name: wikipedia
+    engine: wikipedia
+    shortcut: w
+    disabled: true
+
+  - name: stackoverflow
+    engine: stackoverflow
+    shortcut: so
+    disabled: true
+
+  - name: reddit
+    engine: reddit
+    shortcut: r
+    disabled: true

@@ -1,11 +1,17 @@
 const { logger } = require('@librechat/data-schemas');
 const { generate2FATempToken } = require('~/server/services/twoFactorService');
 const { setAuthTokens } = require('~/server/services/AuthService');
+const { clearLoginFailure } = require('~/server/middleware/rateLimitMiddleware');
 
 const loginController = async (req, res) => {
   try {
     if (!req.user) {
       return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // 登录成功，清除登录失败记录
+    if (req.user.email) {
+      clearLoginFailure(req.user.email);
     }
 
     if (req.user.twoFactorEnabled) {

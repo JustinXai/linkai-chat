@@ -155,6 +155,8 @@ export type TSubmission = {
   addedConvo?: TConversation;
   /** Skills the user invoked via the `$` popover for this submission. */
   manualSkills?: string[];
+  /** Link-AI search mode: 'off' | 'auto' | 'deep' */
+  searchMode?: 'off' | 'auto' | 'deep';
 };
 
 export type EventSubmission = Omit<TSubmission, 'initialResponse'> & { initialResponse: TMessage };

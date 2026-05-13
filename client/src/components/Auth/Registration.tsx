@@ -9,6 +9,7 @@ import type { TRegisterUser, TError } from 'librechat-data-provider';
 import type { TLoginLayoutContext } from '~/common';
 import { useLocalize, TranslationKeys } from '~/hooks';
 import { ErrorMessage } from './ErrorMessage';
+import axios from 'axios';
 
 const Registration: React.FC = () => {
   const navigate = useNavigate();
@@ -41,9 +42,17 @@ const Registration: React.FC = () => {
     onMutate: () => {
       setIsSubmitting(true);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       setIsSubmitting(false);
       setCountdown(3);
+
+      // 初始化 Link-AI 点数
+      try {
+        await axios.post('/api/credits/initialize');
+      } catch (error) {
+        console.error('初始化点数失败:', error);
+      }
+
       const timer = setInterval(() => {
         setCountdown((prevCountdown) => {
           if (prevCountdown <= 1) {
@@ -119,6 +128,9 @@ const Registration: React.FC = () => {
       )}
       {!startupConfigError && !isFetching && (
         <>
+          <p className="mb-4 text-center text-sm text-gray-500 dark:text-gray-400">
+            注册即可获得 100 点免费体验额度
+          </p>
           <form
             className="mt-6"
             aria-label="Registration form"
@@ -210,6 +222,10 @@ const Registration: React.FC = () => {
               </Button>
             </div>
           </form>
+
+          <p className="mt-6 text-center text-xs text-gray-400 dark:text-gray-500">
+            请遵守平台内容规范，禁止生成违法违规内容。
+          </p>
 
           <p className="my-4 text-center text-sm font-light text-gray-700 dark:text-white">
             {localize('com_auth_already_have_account')}{' '}

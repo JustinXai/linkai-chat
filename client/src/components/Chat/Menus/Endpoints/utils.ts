@@ -10,6 +10,7 @@ import type {
 import type { useLocalize } from '~/hooks';
 import SpecIcon from '~/components/Chat/Menus/Endpoints/components/SpecIcon';
 import { Endpoint, SelectedValues } from '~/common';
+import { getFriendlyName } from '~/config/modelMapping';
 
 export function filterItems<
   T extends {
@@ -92,6 +93,9 @@ export function filterModels(
       const assistant = assistantsMap[endpoint.value][modelId];
       modelName =
         typeof assistant.name === 'string' && assistant.name ? (assistant.name as string) : modelId;
+    } else {
+      // Apply friendly name mapping for standard models
+      modelName = getFriendlyName(modelId);
     }
 
     return modelName.toLowerCase().includes(searchTermLower);
@@ -205,7 +209,9 @@ export const getDisplayValue = ({
       return endpoint.assistantNames[selectedValues.model];
     }
 
-    return selectedValues.model;
+    // Apply friendly name mapping for standard models
+    const friendlyName = getFriendlyName(selectedValues.model);
+    return friendlyName;
   }
 
   if (selectedValues.endpoint) {

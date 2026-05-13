@@ -23,6 +23,56 @@ const BackupCodeSchema = new Schema(
   { _id: false },
 );
 
+// Link-AI Credits sub-schema
+const DailyUsageSchema = new Schema(
+  {
+    autoSearchCount: { type: Number, default: 0 },
+    deepSearchCount: { type: Number, default: 0 },
+    lastResetDate: { type: String, default: null },
+  },
+  { _id: false },
+);
+
+const TotalUsageSchema = new Schema(
+  {
+    chatCount: { type: Number, default: 0 },
+    searchCount: { type: Number, default: 0 },
+    deepSearchCount: { type: Number, default: 0 },
+  },
+  { _id: false },
+);
+
+const PlanConfigSchema = new Schema(
+  {
+    dailyAutoSearchLimit: { type: Number, default: 20 },
+    dailyDeepSearchLimit: { type: Number, default: 0 },
+    deepSearchEnabled: { type: Boolean, default: false },
+  },
+  { _id: false },
+);
+
+const LinkAISchema = new Schema(
+  {
+    plan: { type: String, default: 'free' },
+    credits: { type: Number, default: 100 },
+    creditsTotal: { type: Number, default: 100 },
+    expiresAt: { type: Date, default: null },
+    dailyUsage: { type: DailyUsageSchema, default: () => ({}) },
+    totalUsage: { type: TotalUsageSchema, default: () => ({}) },
+    planConfig: {
+      type: Map,
+      of: PlanConfigSchema,
+      default: () => new Map([
+        ['free', { dailyAutoSearchLimit: 20, dailyDeepSearchLimit: 0, deepSearchEnabled: false }],
+        ['weekly', { dailyAutoSearchLimit: 100, dailyDeepSearchLimit: 5, deepSearchEnabled: true }],
+        ['monthly', { dailyAutoSearchLimit: 100, dailyDeepSearchLimit: 5, deepSearchEnabled: true }],
+        ['pro', { dailyAutoSearchLimit: 300, dailyDeepSearchLimit: 20, deepSearchEnabled: true }],
+      ]),
+    },
+  },
+  { _id: false },
+);
+
 const userSchema = new Schema<IUser>(
   {
     name: {
@@ -64,6 +114,11 @@ const userSchema = new Schema<IUser>(
     role: {
       type: String,
       default: SystemRoles.USER,
+    },
+    status: {
+      type: String,
+      enum: ['active', 'banned'],
+      default: 'active',
     },
     googleId: {
       type: String,
@@ -162,12 +217,22 @@ const userSchema = new Schema<IUser>(
       type: String,
       index: true,
     },
+    /** Link-AI Chat credits and subscription information */
+    linkai: {
+      type: LinkAISchema,
+      default: () => ({}),
+    },
   },
   { timestamps: true },
 );
 
 userSchema.index({ email: 1, tenantId: 1 }, { unique: true });
 userSchema.index({ role: 1, tenantId: 1 });
+userSchema.index({ status: 1 });
+// Link-AI credits indexes
+userSchema.index({ 'linkai.plan': 1 });
+userSchema.index({ 'linkai.expiresAt': 1 });
+userSchema.index({ 'linkai.dailyUsage.lastResetDate': 1 });
 
 const oAuthIdFields = [
   'googleId',

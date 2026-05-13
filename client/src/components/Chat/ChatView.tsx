@@ -16,6 +16,7 @@ import ChatForm from './Input/ChatForm';
 import Landing from './Landing';
 import Header from './Header';
 import Footer from './Footer';
+import SearchStatusIndicator from './SearchStatusIndicator';
 import { cn } from '~/utils';
 import store from '~/store';
 
@@ -99,6 +100,7 @@ function ChatView({ index = 0 }: { index?: number }) {
                       isLandingPage && 'max-w-3xl transition-all duration-200 xl:max-w-4xl',
                     )}
                   >
+                    {!isLandingPage && <SearchStatusIndicator />}
                     <ChatForm index={index} />
                     {isLandingPage ? <ConversationStarters /> : <Footer />}
                   </div>

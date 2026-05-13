@@ -59,6 +59,7 @@ const { encodeAndFormat } = require('~/server/services/Files/images/encode');
 const { createContextHandlers } = require('~/app/clients/prompts');
 const { resolveConfigServers } = require('~/server/services/MCP');
 const { getMCPServerTools } = require('~/server/services/Config');
+const { searchContextBuilder } = require('~/server/services/Search');
 const BaseClient = require('~/app/clients/BaseClient');
 const { getMCPManager } = require('~/config');
 const db = require('~/models');
@@ -383,6 +384,41 @@ class AgentClient extends BaseClient {
     const latestMessage = orderedMessages[orderedMessages.length - 1];
     if (latestMessage?.fileContext) {
       sharedRunContextParts.push(latestMessage.fileContext);
+    }
+
+    /** Search context from Link-AI Search */
+    const searchMode = this.options.req?.body?.searchMode;
+    if (searchMode && searchMode !== 'off') {
+      try {
+        const userId = this.options.req?.user?.id;
+        const user = this.options.req?.user;
+        const searchQuery = latestMessage?.text || this.options.req?.body?.text || '';
+
+        if (searchQuery) {
+          const searchContext = await searchContextBuilder.buildSearchContext({
+            query: searchQuery,
+            userId,
+            user,
+            searchMode,
+            locale: 'zh-CN',
+          });
+
+          if (searchContext.contextMessage) {
+            sharedRunContextParts.push(searchContext.contextMessage);
+            // Store search metadata on the client for SSE event emission
+            this.searchMetadata = {
+              performed: searchContext.performed,
+              success: searchContext.success,
+              mode: searchMode,
+              resultCount: searchContext.results?.length || 0,
+              error: searchContext.error,
+            };
+            logger.debug(`[AgentClient] Search context built: mode=${searchMode}, results=${searchContext.results?.length || 0}`);
+          }
+        }
+      } catch (error) {
+        logger.error('[AgentClient] Error building search context:', error);
+      }
     }
 
     /** Augmented prompt from RAG/context handlers */

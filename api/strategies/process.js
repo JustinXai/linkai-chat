@@ -95,6 +95,23 @@ const createSocialUser = async ({
     username,
     name,
     emailVerified,
+    // Initialize Link-AI credits
+    linkai: {
+      plan: 'free',
+      credits: 100,
+      creditsTotal: 100,
+      expiresAt: null,
+      dailyUsage: {
+        autoSearchCount: 0,
+        deepSearchCount: 0,
+        lastResetDate: null,
+      },
+      totalUsage: {
+        chatCount: 0,
+        searchCount: 0,
+        deepSearchCount: 0,
+      },
+    },
   };
 
   const balanceConfig = getBalanceConfig(appConfig);

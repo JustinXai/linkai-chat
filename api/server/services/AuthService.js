@@ -227,6 +227,23 @@ const registerUser = async (user, additionalData = {}) => {
       avatar: null,
       role: isFirstRegisteredUser ? SystemRoles.ADMIN : SystemRoles.USER,
       password: bcrypt.hashSync(password, salt),
+      // Initialize Link-AI credits
+      linkai: {
+        plan: 'free',
+        credits: 100,
+        creditsTotal: 100,
+        expiresAt: null,
+        dailyUsage: {
+          autoSearchCount: 0,
+          deepSearchCount: 0,
+          lastResetDate: null,
+        },
+        totalUsage: {
+          chatCount: 0,
+          searchCount: 0,
+          deepSearchCount: 0,
+        },
+      },
       ...additionalData,
     };
 

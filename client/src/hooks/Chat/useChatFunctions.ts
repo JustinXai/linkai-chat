@@ -33,6 +33,8 @@ import store, { useGetEphemeralAgent } from '~/store';
 import { startupConfigKey } from '~/data-provider';
 import useUserKey from '~/hooks/Input/useUserKey';
 import { useAuthContext } from '~/hooks';
+import { useRecoilValue } from 'recoil';
+import store from '~/store';
 
 const logChatRequest = (request: Record<string, unknown>) => {
   logger.log('=====================================\nAsk function called with:');
@@ -75,6 +77,7 @@ export default function useChatFunctions({
   const setIsSubmitting = useSetRecoilState(store.isSubmittingFamily(index));
   const setShowStopButton = useSetRecoilState(store.showStopButtonByIndex(index));
   const resetLatestMultiMessage = useResetRecoilState(store.latestMessageFamily(index + 1));
+  const searchMode = useRecoilValue(store.searchMode);
 
   /**
    * Atomically read + reset the per-conversation queue of manually-invoked
@@ -371,6 +374,7 @@ export default function useChatFunctions({
     }
 
     logger.log('message_state', initialResponse);
+
     const submission: TSubmission = {
       conversation: {
         ...conversation,
@@ -392,6 +396,8 @@ export default function useChatFunctions({
       editedContent,
       addedConvo,
       manualSkills: manualSkills.length > 0 ? manualSkills : undefined,
+      /** Link-AI search mode */
+      searchMode,
     };
 
     if (isRegenerate) {

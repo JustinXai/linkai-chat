@@ -15,6 +15,7 @@ import { useGetEndpointsQuery, useListAgentsQuery } from '~/data-provider';
 import { useModelSelectorChatContext } from './ModelSelectorChatContext';
 import useSelectMention from '~/hooks/Input/useSelectMention';
 import { filterItems } from './utils';
+import { getFriendlyName } from '~/config/modelMapping';
 
 type ModelSelectorContextType = {
   // State
@@ -106,7 +107,8 @@ export function ModelSelectorProvider({ children, startupConfig }: ModelSelector
         return endpoint.assistantNames?.[model] ?? model;
       }
 
-      return model;
+      // Apply friendly name mapping for standard models
+      return getFriendlyName(model);
     },
     [agentsMap],
   );
